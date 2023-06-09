@@ -29,11 +29,17 @@ async function run() {
     await client.connect();
 
      const classesCollection = client.db('artCraftDb').collection('classes')
+     const instractorsCollection = client.db('artCraftDb').collection('instractors')
 
+     app.get('/instractors', async (req, res)=>{
+          const result = await instractorsCollection.find().toArray();
+          res.send(result)
+     })
      app.get('/classes', async (req, res)=>{
           const result = await classesCollection.find().toArray();
           res.send(result)
      })
+     
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
