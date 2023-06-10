@@ -33,8 +33,19 @@ async function run() {
      const myClassesCollection = client.db('artCraftDb').collection('myclasses')
      const usersCollection = client.db('artCraftDb').collection('users')
 
+
+     app.get('/user', async(req, res)=>{
+          const result= await usersCollection.find().toArray();
+          res.send(result)
+     })
      app.post('/users', async(req, res)=>{
           const user = req.body;
+          const query= {email: user.email}
+          const existingUser = await usersCollection.findOne(query)
+          if(existingUser){
+               return res.send({message: 'User allready saved'})
+          }
+          
           const result = await usersCollection.insertOne(user);
           res.send(result)
      })
@@ -62,6 +73,13 @@ async function run() {
      })
      app.post('/myclasses', async(req, res)=>{
           const studentClass = req.body;
+          const query = {classId: studentClass.classId};
+          const existingClass = await myClassesCollection.findOne(studentClass);
+          
+          if(existingClass){
+               console.log('up')
+               return res.send({message: 'This class allReady added'})
+          }
           const result = await myClassesCollection.insertOne(studentClass);
           res.send(result)
 
