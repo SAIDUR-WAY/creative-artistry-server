@@ -31,6 +31,13 @@ async function run() {
      const classesCollection = client.db('artCraftDb').collection('classes')
      const instractorsCollection = client.db('artCraftDb').collection('instractors')
      const myClassesCollection = client.db('artCraftDb').collection('myclasses')
+     const usersCollection = client.db('artCraftDb').collection('users')
+
+     app.post('/users', async(req, res)=>{
+          const user = req.body;
+          const result = await usersCollection.insertOne(user);
+          res.send(result)
+     })
 
      app.get('/instractors', async (req, res)=>{
           const result = await instractorsCollection.find().toArray();
