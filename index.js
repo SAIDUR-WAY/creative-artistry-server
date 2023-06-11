@@ -10,6 +10,24 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+//create jwt midileware
+const verifyJWT = (req, res, next) => {
+     const authorization = req.headers.authorization;
+     if(!authorization){
+          return res.status(401).send({error: true, message: "unauthorizes access"})
+     }
+     // bearer token
+     const token = authorization.split(' ')[1];
+     // console.log(token)
+     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+          if(err){
+               return res.stauts(401).send({error: true, message: "unable access unauthorizes"})
+          }
+          req.decoded = decoded;
+          next()
+     })
+}
+
 
 
 
@@ -57,6 +75,38 @@ async function run() {
           res.send(result)
      })
 
+     app.get('/users/admin/:email', async(req, res)=>{
+          const email = req.params.email;
+          // console.log(email)
+          const query ={email: email};
+          // if(req.decoded.email !== email){
+          //      res.send({ admin: false })
+          // }
+          const user = await usersCollection.findOne(query);
+          if(user?.role === 'admin'){
+               const result = { admin: "admin"}
+               res.send(result)
+          }
+          if(user?.role === 'instructor'){
+               const result = { admin: "instructor"}
+               res.send(result)
+          }
+          // console.log(user)
+
+     })
+     // app.get('/users/instructor/:email', async(req, res)=>{
+     //      const email = req.params.email;
+     //      // console.log(email)
+     //      const query ={email: email};
+     //      // if(req.decoded.email !== email){
+     //      //      res.send({ admin: false })
+     //      // }
+     //      const user = await usersCollection.findOne(query);
+     
+     //      const result = { instructor: user?.role === 'instructor'}
+     //      res.send(result)
+     // })
+
  app.patch('/users/admin/:id', async(req, res)=>{
      const id = req.params.id;
      const role = req.query.role;
@@ -92,6 +142,11 @@ async function run() {
           if(!email){
                res.send([])
           }
+
+          // const decodedEmail = req.decoded.email;
+          // if(email !== decodedEmail){
+          //      return res.status(403).send({error: true, message: "Forbidden access"})
+          // }
           const query = {email: email};
           // console.log(query);
           const result = await myClassesCollection.find(query).toArray();
@@ -103,7 +158,6 @@ async function run() {
           const existingClass = await myClassesCollection.findOne(studentClass);
           
           if(existingClass){
-               console.log('up')
                return res.send({message: 'This class allReady added'})
           }
           const result = await myClassesCollection.insertOne(studentClass);
@@ -112,9 +166,9 @@ async function run() {
      })
      app.delete('/myclasses/:id', async(req, res)=>{
           const id = req.params.id;
-          console.log(id);
+          // console.log(id);
           const query = {_id: new ObjectId(id)};
-          console.log(query)
+          // console.log(query)
           const result = await myClassesCollection.deleteOne(query);
           res.send(result)
      })
