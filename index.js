@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+var jwt = require('jsonwebtoken');
 const cors = require('cors');
 require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
@@ -33,6 +34,12 @@ async function run() {
      const myClassesCollection = client.db('artCraftDb').collection('myclasses')
      const usersCollection = client.db('artCraftDb').collection('users')
 
+
+     app.post('/jwt', (req, res)=>{
+          const user = req.body;
+          const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+          res.send({token})
+     })
 
      app.get('/users', async(req, res)=>{
           const result= await usersCollection.find().toArray();
@@ -68,7 +75,7 @@ async function run() {
      const result = await usersCollection.deleteOne(query);
      res.send(result)
  })
- 
+
      app.get('/instractors', async (req, res)=>{
           const result = await instractorsCollection.find().toArray();
           res.send(result)
