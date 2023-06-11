@@ -45,7 +45,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+   //    await client.connect();
 
      const classesCollection = client.db('artCraftDb').collection('classes')
      const instractorsCollection = client.db('artCraftDb').collection('instractors')
@@ -77,7 +77,6 @@ async function run() {
 
      app.get('/users/admin/:email', async(req, res)=>{
           const email = req.params.email;
-          // console.log(email)
           const query ={email: email};
           // if(req.decoded.email !== email){
           //      res.send({ admin: false })
@@ -91,21 +90,9 @@ async function run() {
                const result = { admin: "instructor"}
                res.send(result)
           }
-          // console.log(user)
+          
 
      })
-     // app.get('/users/instructor/:email', async(req, res)=>{
-     //      const email = req.params.email;
-     //      // console.log(email)
-     //      const query ={email: email};
-     //      // if(req.decoded.email !== email){
-     //      //      res.send({ admin: false })
-     //      // }
-     //      const user = await usersCollection.findOne(query);
-     
-     //      const result = { instructor: user?.role === 'instructor'}
-     //      res.send(result)
-     // })
 
  app.patch('/users/admin/:id', async(req, res)=>{
      const id = req.params.id;
@@ -134,11 +121,17 @@ async function run() {
           const result = await classesCollection.find().toArray();
           res.send(result)
      })
+     app.post('/classes', async(req, res)=>{
+          const data = req.body;
+          console.log(data)
+          const result = await classesCollection.insertOne(data);
+          res.send(result)
+     })
 
      // myclasses collection
      app.get('/myclasses', async (req, res)=>{
           const email = req.query.email;
-          // console.log(email)
+          console.log(email)
           if(!email){
                res.send([])
           }
