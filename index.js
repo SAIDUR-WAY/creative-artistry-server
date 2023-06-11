@@ -34,7 +34,7 @@ async function run() {
      const usersCollection = client.db('artCraftDb').collection('users')
 
 
-     app.get('/user', async(req, res)=>{
+     app.get('/users', async(req, res)=>{
           const result= await usersCollection.find().toArray();
           res.send(result)
      })
@@ -50,6 +50,25 @@ async function run() {
           res.send(result)
      })
 
+ app.patch('/users/admin/:id', async(req, res)=>{
+     const id = req.params.id;
+     const role = req.query.role;
+     const filter ={_id: new ObjectId(id)}
+     const updateDoc = {
+          $set: {
+               role: role
+          }
+     }
+     const result = await usersCollection.updateOne(filter, updateDoc);
+     res.send(result)
+ })
+ app.delete('/users/:id', async(req, res)=>{
+     const id = req.params.id;
+     const query = {_id: new ObjectId(id)};
+     const result = await usersCollection.deleteOne(query);
+     res.send(result)
+ })
+ 
      app.get('/instractors', async (req, res)=>{
           const result = await instractorsCollection.find().toArray();
           res.send(result)
