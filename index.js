@@ -84,12 +84,13 @@ async function run() {
           const user = await usersCollection.findOne(query);
           if(user?.role === 'admin'){
                const result = { admin: "admin"}
-               res.send(result)
+              return res.send(result)
           }
           if(user?.role === 'instructor'){
                const result = { admin: "instructor"}
-               res.send(result)
+              return res.send(result)
           }
+          res.send([])
           
 
      })
@@ -123,7 +124,7 @@ async function run() {
      })
      app.post('/classes', async(req, res)=>{
           const data = req.body;
-          console.log(data)
+          // console.log(data)
           const result = await classesCollection.insertOne(data);
           res.send(result)
      })
@@ -131,7 +132,7 @@ async function run() {
      // myclasses collection
      app.get('/myclasses', async (req, res)=>{
           const email = req.query.email;
-          console.log(email)
+          // console.log(email)
           if(!email){
                res.send([])
           }
