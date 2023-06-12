@@ -81,7 +81,9 @@ async function run() {
           // if(req.decoded.email !== email){
           //      res.send({ admin: false })
           // }
+          
           const user = await usersCollection.findOne(query);
+         
           if(user?.role === 'admin'){
                const result = { admin: "admin"}
               return res.send(result)
@@ -90,7 +92,7 @@ async function run() {
                const result = { admin: "instructor"}
               return res.send(result)
           }
-          res.send([])
+          
           
 
      })
@@ -118,10 +120,50 @@ async function run() {
           const result = await instractorsCollection.find().toArray();
           res.send(result)
      })
-     app.get('/classes', async (req, res)=>{
-          const result = await classesCollection.find().toArray();
+     // use for instrucor dashbord myclasses
+     app.get('/classes', async(req, res)=>{
+          const email = req.query.email;
+          console.log(email)
+          const query = {instructorEmail: email};
+          const result = await classesCollection.find(query).toArray();
           res.send(result)
      })
+     // use for instructor update button
+     app.get('/classes/update/:id', async(req, res)=>{
+          const id = req.params.id;
+          console.log(id)
+          const query = {_id: new ObjectId(id)}
+          const result = await classesCollection.findOne(query)
+          res.send(result)
+     })
+    // temporary use home, TODO: sort by enroled
+     app.get('/classes/allclasses', async (req, res)=>{
+       const result = await classesCollection.find().toArray();
+       return res.send(result)
+
+     })
+
+     //instructor update data from update.jsx
+     app.patch('/classes/:id', async (req, res)=>{
+          const id = req.params.id;
+          
+          const updatedClass = req.body;
+          console.log(updatedClass)
+          const filter = {_id: new ObjectId(id)};
+          console.log(filter)
+          const updateDoc = {
+               $set: 
+                    updatedClass
+               
+          }
+          const result = await classesCollection.updateOne(filter, updateDoc);
+          res.send(result)
+     })
+
+
+
+
+
      app.post('/classes', async(req, res)=>{
           const data = req.body;
           // console.log(data)
@@ -141,7 +183,7 @@ async function run() {
           // if(email !== decodedEmail){
           //      return res.status(403).send({error: true, message: "Forbidden access"})
           // }
-          const query = {email: email};
+          const query = {studentEmail: email};
           // console.log(query);
           const result = await myClassesCollection.find(query).toArray();
           res.send(result)
