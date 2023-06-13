@@ -3,6 +3,7 @@ const app = express();
 var jwt = require('jsonwebtoken');
 const cors = require('cors');
 require('dotenv').config()
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY)
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
@@ -123,7 +124,6 @@ async function run() {
      // use for instrucor dashbord myclasses
      app.get('/classes', async(req, res)=>{
           const email = req.query.email;
-          console.log(email)
           const query = {instructorEmail: email};
           const result = await classesCollection.find(query).toArray();
           res.send(result)
@@ -131,7 +131,6 @@ async function run() {
      // use for instructor update button
      app.get('/classes/update/:id', async(req, res)=>{
           const id = req.params.id;
-          console.log(id)
           const query = {_id: new ObjectId(id)}
           const result = await classesCollection.findOne(query)
           res.send(result)
@@ -148,7 +147,6 @@ async function run() {
           const id = req.params.id;
           
           const updatedClass = req.body;
-          console.log(updatedClass)
           const filter = {_id: new ObjectId(id)};
           console.log(filter)
           const updateDoc = {
@@ -200,6 +198,14 @@ async function run() {
           res.send(result)
 
      })
+     //student single class get
+     app.get('/myclasses/payment/:id', async(req,res)=>{
+          const id= req.params.id;
+          console.log(id);
+          const query = {_id: new ObjectId(id)};
+          const result = await myClassesCollection.findOne(query);
+          res.send(result)
+     })
      app.delete('/myclasses/:id', async(req, res)=>{
           const id = req.params.id;
           // console.log(id);
@@ -207,6 +213,21 @@ async function run() {
           // console.log(query)
           const result = await myClassesCollection.deleteOne(query);
           res.send(result)
+     })
+     //create payment intent
+     app.post('/create-payment-intent', async(req, res)=>{
+          const price = req.body.paymentPrice;
+          const amount  = parseInt(price * 100);
+
+          const paymentIntent = await stripe.paymentIntents.create({
+               amount: amount,
+               currency: 'usd',
+               payment_method_types: ['card'],
+               description: 'payment'
+          });
+          res.send({
+               clientSecret: paymentIntent.client_secret
+          })
      })
      
 
