@@ -52,6 +52,7 @@ async function run() {
      const instractorsCollection = client.db('artCraftDb').collection('instractors')
      const myClassesCollection = client.db('artCraftDb').collection('myclasses')
      const usersCollection = client.db('artCraftDb').collection('users')
+     const paymentCollection = client.db('artCraftDb').collection('payment')
 
 
      app.post('/jwt', (req, res)=>{
@@ -98,10 +99,12 @@ async function run() {
 
      })
 
- app.patch('/users/admin/:id', async(req, res)=>{
-     const id = req.params.id;
+ app.patch('/users/manage', async(req, res)=>{
+     const email = req.query.email;
+     // console.log(email)
      const role = req.query.role;
-     const filter ={_id: new ObjectId(id)}
+     // console.log(role);
+     const filter ={email: email}
      const updateDoc = {
           $set: {
                role: role
@@ -117,8 +120,47 @@ async function run() {
      res.send(result)
  })
 
-     app.get('/instractors', async (req, res)=>{
-          const result = await instractorsCollection.find().toArray();
+ app.get('/users-with-classes', async (req, res) => {
+     try {
+       const allUsers = await usersCollection.find({ role: 'instructor' }).toArray();
+       const userEmails = allUsers.map((user) => user.email);
+   
+       const usersWithClasses = await classesCollection
+         .find({ instructorEmail: { $in: userEmails } })
+         .toArray();
+   
+       const usersClassesArray = usersWithClasses.map((userClass) => {
+         const user = allUsers.find((user) => user.email === userClass.instructorEmail);
+         return {
+           user: user,
+           class: userClass
+         };
+       });
+   
+       res.send(usersClassesArray);
+     } catch (error) {
+       console.error(error);
+       res.status(500).send("Error retrieving users with classes");
+     }
+   });
+   
+   
+   
+//  app.get('/popularins', async (req, res) => {
+//      const email = req.query.email;
+//      const query = { email: email };
+//      const selectedUsers = await usersCollection.find(query).toArray();
+
+//      const queryClass = { instructorEmail: email };
+//      const selectClasses = await classesCollection.find(queryClass).toArray();
+   
+//      const combinedResults = [...selectedUsers, ...selectClasses];
+   
+//      res.send(combinedResults);
+//    });
+
+     app.get('/instructors', async (req, res)=>{
+          const result = await usersCollection.find({ role: 'instructor' }).toArray();
           res.send(result)
      })
      // use for instrucor dashbord myclasses
@@ -135,12 +177,18 @@ async function run() {
           const result = await classesCollection.findOne(query)
           res.send(result)
      })
-    // temporary use home, TODO: sort by enroled
-     app.get('/classes/allclasses', async (req, res)=>{
-       const result = await classesCollection.find().toArray();
-       return res.send(result)
+    // temporary use, TODO: sort by enroled
+     app.get('/classes/approvedclasses', async (req, res)=>{
+       const result = await classesCollection.find({ status: 'approved' }).toArray();
+       res.send(result)
+
+
 
      })
+     app.get('/classes/popularclasses', async (req, res) => {
+          const result = await classesCollection.find({ status: 'approved' }).sort({ enrolledStudent: -1 }).toArray();
+          res.send(result);
+        });
 
      //instructor update data from update.jsx
      app.patch('/classes/:id', async (req, res)=>{
@@ -148,7 +196,6 @@ async function run() {
           
           const updatedClass = req.body;
           const filter = {_id: new ObjectId(id)};
-          console.log(filter)
           const updateDoc = {
                $set: 
                     updatedClass
@@ -201,7 +248,6 @@ async function run() {
      //student single class get
      app.get('/myclasses/payment/:id', async(req,res)=>{
           const id= req.params.id;
-          console.log(id);
           const query = {_id: new ObjectId(id)};
           const result = await myClassesCollection.findOne(query);
           res.send(result)
@@ -229,6 +275,44 @@ async function run() {
                clientSecret: paymentIntent.client_secret
           })
      })
+
+
+     //pament api
+     app.get('/payment', async(req,res)=>{
+          const email = req.query.email;
+          const query = {email: email};
+          const result = await paymentCollection.find(query).toArray();
+          result.sort((a, b) => new Date(b.date) - new Date(a.date));
+          res.send(result)
+     })
+     // app.get('/payment/allpayment', async (req, res)=>{
+     //      const result = await paymentCollection.find().toArray();
+     //      res.send(result)
+     // })
+     app.post('/payment', async(req, res)=>{
+          const payment = req.body;
+          const result = await paymentCollection.insertOne(payment);
+
+          const myClassAddId = payment.myClassAddId;
+          const query = {_id: new ObjectId(myClassAddId)}
+          const deleteAddClass= await myClassesCollection.deleteOne(query);
+
+
+          const classId = payment.classId;
+          const filter = {_id: new ObjectId(classId)}
+          const updateDoc = {
+               $set: {
+                    availibleSeats: payment.availibleSeats,
+                    enrolledStudent: payment.enrolledStudent
+
+               }
+          }
+          const updateSeats = await classesCollection.updateOne(filter, updateDoc);
+
+          res.send(result)
+     
+     })
+
      
 
     // Send a ping to confirm a successful connection
