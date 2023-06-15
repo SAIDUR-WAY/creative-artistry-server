@@ -94,6 +94,11 @@ async function run() {
                const result = { admin: "instructor"}
               return res.send(result)
           }
+          if(user?.role === 'student'){
+               const result = { admin: "student"}
+              return res.send(result)
+          }
+          
           
           
 
@@ -112,6 +117,10 @@ async function run() {
      }
      const result = await usersCollection.updateOne(filter, updateDoc);
      res.send(result)
+ })
+ app.get('/users/allinstructor', async (req, res)=>{
+     const result = await usersCollection.find({ role: 'instructor' }).toArray();
+     res.send(result);
  })
  app.delete('/users/:id', async(req, res)=>{
      const id = req.params.id;
@@ -159,10 +168,35 @@ async function run() {
 //      res.send(combinedResults);
 //    });
 
-     app.get('/instructors', async (req, res)=>{
-          const result = await usersCollection.find({ role: 'instructor' }).toArray();
-          res.send(result)
-     })
+     // instructor collection not use but future in use;
+     // app.get('/instructors', async (req, res)=>{
+     //      const result = await usersCollection.find({ role: 'instructor' }).toArray();
+     //      res.send(result)
+     // })
+
+   // use for admin manage classes for all data
+   app.get('/classes/manage', async (req, res)=>{
+     const result = await classesCollection.find().toArray();
+     res.send(result);
+   })
+
+   app.patch('/classes/manage/:id', async (req, res)=>{
+     const id = req.params.id;
+     const  value = req.body;
+
+     const filter = {_id: new ObjectId(id)}
+     const updateDoc = {
+          $set: 
+           value
+          
+     }
+   
+
+     const result = await classesCollection.updateOne(filter, updateDoc)
+     res.send(result);
+
+   })
+
      // use for instrucor dashbord myclasses
      app.get('/classes', async(req, res)=>{
           const email = req.query.email;
@@ -177,7 +211,8 @@ async function run() {
           const result = await classesCollection.findOne(query)
           res.send(result)
      })
-    // temporary use, TODO: sort by enroled
+    
+
      app.get('/classes/approvedclasses', async (req, res)=>{
        const result = await classesCollection.find({ status: 'approved' }).toArray();
        res.send(result)
@@ -208,7 +243,7 @@ async function run() {
 
 
 
-
+     // insert data in instrutor add class
      app.post('/classes', async(req, res)=>{
           const data = req.body;
           // console.log(data)
